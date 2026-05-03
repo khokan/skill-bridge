@@ -253,7 +253,7 @@ GET    /api/rag/stats           # RAG stats
 
 ### **Clone Repository**
 ```bash
-git clone https://github.com/yourusername/skill-bridge.git
+git clone https://github.com/khokan/skill-bridge.git
 cd skill-bridge
 ```
 
@@ -277,7 +277,7 @@ pnpm prisma migrate dev
 
 # Start development server
 pnpm dev
-# Backend runs on http://localhost:5000
+# Backend runs on https://skillbridge-be.vercel.app/
 ```
 
 ### **Frontend Setup**
@@ -288,10 +288,6 @@ cd frontend
 # Install dependencies
 pnpm install
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env:
-# NEXT_PUBLIC_API_URL=http://localhost:5000/api
 
 # Start development server
 pnpm dev
@@ -315,8 +311,8 @@ pnpm dev
 ```
 
 ### **Access the App**
-- Frontend: [http://localhost:3000](http://localhost:3000)
-- Backend API: [http://localhost:5000/api](http://localhost:5000/api)
+- Frontend: [https://skillbridge-fe.vercel.app](https://skillbridge-fe.vercel.app/)
+- Backend API: [https://skillbridge-be.vercel.app/](https://skillbridge-be.vercel.app/)
 
 ---
 
