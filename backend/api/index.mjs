@@ -587,6 +587,7 @@ var EmbeddingService = class {
 };
 
 // src/modules/rag/indexing.service.ts
+import { randomUUID } from "crypto";
 var SOURCE_TYPE = "TUTOR_PROFILE";
 var toVectorLiteral = (vector) => `[${vector.join(",")}]`;
 var IndexingService = class {
@@ -600,6 +601,12 @@ var IndexingService = class {
       const comment = review.comment?.trim() || "No comment";
       return `- Rating: ${review.rating}/5. Comment: ${comment}`;
     }).join("\n") : "No reviews yet.";
+    const availabilityText = profile.availability.length > 0 ? profile.availability.map((slot) => {
+      const start = new Date(slot.startTime).toLocaleString();
+      const end = new Date(slot.endTime).toLocaleString();
+      const status = slot.isBooked ? "Booked" : "Available";
+      return `- ${start} to ${end} (${status})`;
+    }).join("\n") : "No availability slots configured.";
     return `Tutor Name: ${profile.user.name}
 Headline: ${profile.headline || "N/A"}
 Bio: ${profile.bio || "N/A"}
@@ -613,7 +620,10 @@ Average Rating: ${profile.avgRating}/5 from ${profile.reviewCount} reviews
 Categories: ${categories.length > 0 ? categories.join(", ") : "None listed"}
 
 Recent Reviews:
-${reviews}`;
+${reviews}
+
+Available Slots:
+${availabilityText}`;
   }
   buildTutorProfileMetadata(profile) {
     return {
@@ -669,6 +679,13 @@ ${reviews}`;
             comment: true,
             createdAt: true
           }
+        },
+        availability: {
+          select: {
+            startTime: true,
+            endTime: true,
+            isBooked: true
+          }
         }
       }
     });
@@ -676,9 +693,11 @@ ${reviews}`;
   async upsertDocument(chunkKey, sourceId, sourceLabel, content, metadata) {
     const embedding = await this.embeddingService.generateEmbedding(content);
     const vectorLiteral = toVectorLiteral(embedding);
+    const embeddingId = randomUUID();
     await prisma.$executeRaw(prismaNamespace_exports.sql`
       INSERT INTO "document_embeddings"
       (
+        "id",
         "chunkKey",
         "sourceType",
         "sourceId",
@@ -692,6 +711,7 @@ ${reviews}`;
       )
       VALUES
       (
+        ${embeddingId},
         ${chunkKey},
         ${SOURCE_TYPE},
         ${sourceId},
@@ -777,6 +797,13 @@ ${reviews}`;
             rating: true,
             comment: true,
             createdAt: true
+          }
+        },
+        availability: {
+          select: {
+            startTime: true,
+            endTime: true,
+            isBooked: true
           }
         }
       },
@@ -1064,6 +1091,7 @@ var TutorProfileService = {
         userId: true,
         createdAt: true,
         updatedAt: true,
+        experienceYrs: true,
         categories: { select: { category: { select: { id: true, name: true, slug: true } } } }
       }
     });
@@ -1416,6 +1444,12 @@ var TutorManageController = {
         });
       }
       const result = await TutorManageService.setAvailability(req.user.id, { slots });
+      try {
+        const ragService3 = new RAGService();
+        await ragService3.indexTutorProfileByUserId(req.user.id);
+      } catch (err) {
+        console.warn("RAG indexing failed after availability update:", err);
+      }
       return res.status(200).json({
         success: true,
         message: "Availability updated",
@@ -1655,7 +1689,7 @@ var ReviewsService = {
       select: { id: true }
     });
     if (exists) throw new Error("Review already submitted");
-    return prisma.review.create({
+    const created = await prisma.review.create({
       data: {
         bookingId: booking.id,
         tutorProfileId: booking.tutorProfileId,
@@ -1665,6 +1699,15 @@ var ReviewsService = {
       },
       select: { id: true }
     });
+    try {
+      const ragService3 = new RAGService();
+      if (booking.tutorProfileId) {
+        await ragService3.indexTutorProfileById(booking.tutorProfileId);
+      }
+    } catch (err) {
+      console.warn("RAG indexing failed after review create:", err);
+    }
+    return created;
   }
 };
 
@@ -1924,7 +1967,7 @@ var RagController = {
   },
   indexTutorProfile: async (req, res) => {
     try {
-      const { profileId } = req.params;
+      const profileId = Array.isArray(req.params.profileId) ? req.params.profileId[0] : req.params.profileId;
       if (!profileId) {
         return res.status(400).json({
           success: false,
@@ -1946,7 +1989,7 @@ var RagController = {
   },
   removeTutorProfileIndex: async (req, res) => {
     try {
-      const { profileId } = req.params;
+      const profileId = Array.isArray(req.params.profileId) ? req.params.profileId[0] : req.params.profileId;
       if (!profileId) {
         return res.status(400).json({
           success: false,
@@ -2010,7 +2053,6 @@ router8.delete(
 );
 router8.post(
   "/query",
-  auth_default("STUDENT" /* STUDENT */, "TUTOR" /* TUTOR */, "ADMIN" /* ADMIN */),
   RagController.queryTutorProfiles
 );
 var ragRoutes = router8;
