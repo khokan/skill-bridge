@@ -1,18 +1,17 @@
 export class EmbeddingService {
   private readonly apiKey:
     | string =
-    process.env.RAG_OPENROUTER_API_KEY ?? process.env.OPENROUTER_API_KEY ?? "";
+    process.env.OPENROUTER_API_KEY ?? "";
   private readonly apiUrl = "https://openrouter.ai/api/v1";
   private readonly embeddingModel:
     | string =
-    process.env.RAG_OPENROUTER_EMBEDDING_MODEL ??
-    process.env.OPENROUTER_EMBEDDING_MODEL ??
+     process.env.OPENROUTER_EMBEDDING_MODEL ??
     "nvidia/llama-nemotron-embed-vl-1b-v2:free";
 
   async generateEmbedding(text: string): Promise<number[]> {
     if (!this.apiKey) {
       throw new Error(
-        "OpenRouter API key is missing. Set RAG_OPENROUTER_API_KEY or OPENROUTER_API_KEY.",
+        "OpenRouter API key is missing. Set OPENROUTER_API_KEY.",
       );
     }
 

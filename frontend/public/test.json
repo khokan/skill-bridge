@@ -1,0 +1,48 @@
+{
+  "bookings": [
+    {
+      "studentId": "SmbcpUJd1Aqu7PnE0cGNbIhUtEL0CRtC",
+      "tutorId": "Cwh4mGiiTghE6e4jjME2XPFGVGoTd0mW",
+      "tutorProfileId": "Cwh4mGiiTghE6e4jjME2XPFGVGoTd0mW",
+      "availabilityId": null,
+      "status": "CONFIRMED",
+      "startTime": "2026-01-30T09:00:00.000Z",
+      "endTime": "2026-01-30T10:00:00.000Z",
+      "price": 600,
+      "currency": "BDT"
+    },
+    {
+      "studentId": "SmbcpUJd1Aqu7PnE0cGNbIhUtEL0CRtC",
+      "tutorId": "Cwh4mGiiTghE6e4jjME2XPFGVGoTd0mW",
+      "tutorProfileId": "Cwh4mGiiTghE6e4jjME2XPFGVGoTd0mW",
+      "availabilityId": null,
+      "status": "CONFIRMED",
+      "startTime": "2026-02-02T11:00:00.000Z",
+      "endTime": "2026-02-02T12:00:00.000Z",
+      "price": 700,
+      "currency": "BDT"
+    },
+    {
+      "studentId": "SmbcpUJd1Aqu7PnE0cGNbIhUtEL0CRtC",
+      "tutorId": "Cwh4mGiiTghE6e4jjME2XPFGVGoTd0mW",
+      "tutorProfileId": "Cwh4mGiiTghE6e4jjME2XPFGVGoTd0mW",
+      "availabilityId": null,
+      "status": "COMPLETED",
+      "startTime": "2026-01-21T14:00:00.000Z",
+      "endTime": "2026-01-21T15:00:00.000Z",
+      "price": 500,
+      "currency": "BDT"
+    },
+    {
+      "studentId": "SmbcpUJd1Aqu7PnE0cGNbIhUtEL0CRtC",
+      "tutorId": "Cwh4mGiiTghE6e4jjME2XPFGVGoTd0mW",
+      "tutorProfileId": "Cwh4mGiiTghE6e4jjME2XPFGVGoTd0mW",
+      "availabilityId": null,
+      "status": "CANCELLED",
+      "startTime": "2026-01-25T16:00:00.000Z",
+      "endTime": "2026-01-25T17:00:00.000Z",
+      "price": 650,
+      "currency": "BDT"
+    }
+  ]
+}

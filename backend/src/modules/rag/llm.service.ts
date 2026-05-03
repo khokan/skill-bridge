@@ -1,11 +1,10 @@
 export class LLMService {
   private readonly apiKey:
     | string =
-    process.env.RAG_OPENROUTER_API_KEY ?? process.env.OPENROUTER_API_KEY ?? "";
+    process.env.OPENROUTER_API_KEY ?? "";
   private readonly apiUrl = "https://openrouter.ai/api/v1";
   private readonly model:
     | string =
-    process.env.RAG_OPENROUTER_LLM_MODEL ??
     process.env.OPENROUTER_LLM_MODEL ??
     "nvidia/nemotron-3-super-120b-a12b:free";
 
@@ -16,7 +15,7 @@ export class LLMService {
   ): Promise<string> {
     if (!this.apiKey) {
       throw new Error(
-        "OpenRouter API key is missing. Set RAG_OPENROUTER_API_KEY or OPENROUTER_API_KEY.",
+        "OpenRouter API key is missing. Set OPENROUTER_API_KEY.",
       );
     }
 

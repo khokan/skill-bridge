@@ -550,13 +550,13 @@ import { Router as Router2 } from "express";
 
 // src/modules/rag/embedding.service.ts
 var EmbeddingService = class {
-  apiKey = process.env.RAG_OPENROUTER_API_KEY ?? process.env.OPENROUTER_API_KEY ?? "";
+  apiKey = process.env.OPENROUTER_API_KEY ?? "";
   apiUrl = "https://openrouter.ai/api/v1";
-  embeddingModel = process.env.RAG_OPENROUTER_EMBEDDING_MODEL ?? process.env.OPENROUTER_EMBEDDING_MODEL ?? "nvidia/llama-nemotron-embed-vl-1b-v2:free";
+  embeddingModel = process.env.OPENROUTER_EMBEDDING_MODEL ?? "nvidia/llama-nemotron-embed-vl-1b-v2:free";
   async generateEmbedding(text) {
     if (!this.apiKey) {
       throw new Error(
-        "OpenRouter API key is missing. Set RAG_OPENROUTER_API_KEY or OPENROUTER_API_KEY."
+        "OpenRouter API key is missing. Set OPENROUTER_API_KEY."
       );
     }
     const response = await fetch(`${this.apiUrl}/embeddings`, {
@@ -896,13 +896,13 @@ ${availabilityText}`;
 
 // src/modules/rag/llm.service.ts
 var LLMService = class {
-  apiKey = process.env.RAG_OPENROUTER_API_KEY ?? process.env.OPENROUTER_API_KEY ?? "";
+  apiKey = process.env.OPENROUTER_API_KEY ?? "";
   apiUrl = "https://openrouter.ai/api/v1";
-  model = process.env.RAG_OPENROUTER_LLM_MODEL ?? process.env.OPENROUTER_LLM_MODEL ?? "nvidia/nemotron-3-super-120b-a12b:free";
+  model = process.env.OPENROUTER_LLM_MODEL ?? "nvidia/nemotron-3-super-120b-a12b:free";
   async generateResponse(prompt, context = [], asJson = false) {
     if (!this.apiKey) {
       throw new Error(
-        "OpenRouter API key is missing. Set RAG_OPENROUTER_API_KEY or OPENROUTER_API_KEY."
+        "OpenRouter API key is missing. Set OPENROUTER_API_KEY."
       );
     }
     let fullPrompt = context.length > 0 ? `Context information:
