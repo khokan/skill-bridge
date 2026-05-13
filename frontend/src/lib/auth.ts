@@ -14,3 +14,14 @@ export const authClient = createAuthClient({
   },
 });
 
+export async function signOutUser() {
+  try {
+    await authClient.signOut();
+  } finally {
+    // Fallback to the app route so server-side cookies are cleared reliably.
+    await fetch("/api/ui/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  }
+}
