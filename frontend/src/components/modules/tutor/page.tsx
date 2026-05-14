@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { getBookings, cancelBooking } from "@/actions/booking.actions";
 import { completeTutorBooking } from "@/actions/tutorBooking.actions";
 import { getTutorReviewByBookingId } from "@/actions/tutor.actions";
@@ -96,6 +97,33 @@ export default function TutorBookingsPage() {
       setLoading(false);
     }
   };
+
+  if (loading && items.length === 0) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-5 p-4">
+        <div>
+          <h1 className="text-2xl font-semibold">My Sessions</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage confirmed sessions and view reviews on completed sessions.
+          </p>
+        </div>
+
+        <Card className="rounded-3xl border border-primary/20 bg-background/90 shadow-2xl">
+          <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-primary shadow-lg shadow-primary/20">
+              <Loader2 className="h-12 w-12 animate-spin" />
+            </div>
+            <div>
+              <p className="text-xl font-semibold">Loading your sessions</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Fetching your latest tutor bookings, status updates, and reviews.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-4">

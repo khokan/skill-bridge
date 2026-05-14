@@ -1,41 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { formatDistanceToNow } from "date-fns";
+import { AlertCircle, Ban, CheckCircle, Loader2, Mail, Shield, User } from "lucide-react";
 import { toast } from "sonner";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow 
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
+import { getAdminUsers, setUserStatus } from "@/actions/admin.actions";
+import { DynamicTable, type DynamicTableColumn, type DynamicTableFilter } from "@/components/shared/dynamic-table";
+import { ProfilePanel, type ProfileSummary } from "@/components/shared/profile-panel";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { 
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -44,23 +20,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Ban, 
-  CheckCircle, 
-  Shield, 
-  User, 
-  Mail, 
-  Calendar,
-  Loader2,
-  AlertCircle
-} from "lucide-react";
-import { getAdminUsers, setUserStatus } from "@/actions/admin.actions";
-import { formatDistanceToNow } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type UserItem = {
   id: string;
@@ -74,17 +41,11 @@ type UserItem = {
   image?: string;
 };
 
-type UserRole = "STUDENT" | "TUTOR" | "ADMIN" | "ALL";
-type UserStatus = "ACTIVE" | "BANNED" | "ALL";
-
 export default function AdminUsersPage() {
   const [items, setItems] = useState<UserItem[]>([]);
-  const [filteredItems, setFilteredItems] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<UserRole>("ALL");
-  const [statusFilter, setStatusFilter] = useState<UserStatus>("ALL");
+  const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
 
   const load = async () => {
     try {
@@ -92,19 +53,15 @@ export default function AdminUsersPage() {
       const { data, error } = await getAdminUsers();
       if (error) throw error;
 
-      const users = (data?.data?.items ?? []) as UserItem[];
-      
-      // Filter out admins (unless we want to see them)
-      const nonAdminUsers = users.filter((u) => {
+      const users = ((data?.data?.items ?? data?.data ?? data ?? []) as UserItem[]).filter((u) => {
         const role = (u.role ?? "").toUpperCase();
         return role !== "ADMIN";
       });
-      
-      setItems(nonAdminUsers);
-      setFilteredItems(nonAdminUsers);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to load users");
-      console.error("Load error:", e);
+
+      setItems(users);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to load users");
+      console.error("Load error:", error);
     } finally {
       setLoading(false);
     }
@@ -113,37 +70,6 @@ export default function AdminUsersPage() {
   useEffect(() => {
     load();
   }, []);
-
-  // Filter users based on search and filters
-  useEffect(() => {
-    let result = items;
-
-    // Search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(user => 
-        user.name.toLowerCase().includes(searchLower) ||
-        user.email.toLowerCase().includes(searchLower) ||
-        user.role?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Role filter
-    if (roleFilter !== "ALL") {
-      result = result.filter(user => 
-        (user.role?.toUpperCase() || "USER") === roleFilter
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== "ALL") {
-      result = result.filter(user => 
-        (user.status?.toUpperCase() || "ACTIVE") === statusFilter
-      );
-    }
-
-    setFilteredItems(result);
-  }, [search, roleFilter, statusFilter, items]);
 
   const toggleBan = async (userId: string, currentStatus: string) => {
     try {
@@ -162,8 +88,8 @@ export default function AdminUsersPage() {
           ? { ...user, status: nextStatus }
           : user
       ));
-    } catch (e: any) {
-      toast.error(e?.message ?? "Update failed");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Update failed");
     } finally {
       setProcessing(null);
     }
@@ -214,7 +140,141 @@ export default function AdminUsersPage() {
     );
   };
 
-  // Statistics
+  const filters = useMemo<Array<DynamicTableFilter<UserItem>>>(
+    () => [
+      {
+        id: "role",
+        label: "Role",
+        defaultValue: "ALL",
+        options: [
+          { label: "All roles", value: "ALL" },
+          { label: "Students", value: "STUDENT" },
+          { label: "Tutors", value: "TUTOR" },
+        ],
+        match: (user, value) => (user.role?.toUpperCase() || "USER") === value,
+      },
+      {
+        id: "status",
+        label: "Status",
+        defaultValue: "ALL",
+        options: [
+          { label: "All statuses", value: "ALL" },
+          { label: "Active", value: "ACTIVE" },
+          { label: "Banned", value: "BANNED" },
+        ],
+        match: (user, value) => (user.status?.toUpperCase() || "ACTIVE") === value,
+      },
+    ],
+    []
+  );
+
+  const columns: Array<DynamicTableColumn<UserItem>> = [
+    {
+      key: "user",
+      header: "User",
+      cell: (user) => (
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+            {user.image ? (
+              <Image src={user.image} alt={user.name} width={40} height={40} className="h-full w-full object-cover" />
+            ) : (
+              getRoleIcon(user.role || "USER")
+            )}
+          </div>
+          <div>
+            <div className="font-medium">{user.name}</div>
+            <div className="text-sm text-muted-foreground">ID: {user.id.substring(0, 8)}...</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "role",
+      header: "Role",
+      cell: (user) => (
+        <div className="flex flex-col gap-1">
+          {getRoleBadge(user.role || "USER")}
+          {getEmailVerifiedBadge(user.emailVerified)}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (user) => getStatusBadge(user.status || "ACTIVE"),
+    },
+    {
+      key: "email",
+      header: "Email",
+      cell: (user) => (
+        <div className="flex items-center gap-2">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          {user.email}
+        </div>
+      ),
+    },
+    {
+      key: "joined",
+      header: "Joined",
+      cell: (user) => (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-muted text-[10px] font-semibold">•</span>
+          {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+        </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: <div className="text-right">Actions</div>,
+      className: "text-right",
+      cell: (user) => {
+        const userStatus = user.status?.toUpperCase() || "ACTIVE";
+        const isBanned = userStatus === "BANNED";
+
+        return (
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setSelectedUser(user)}>
+              View profile
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogAction asChild>
+                <Button
+                  size="sm"
+                  variant={isBanned ? "default" : "destructive"}
+                  disabled={processing === user.id}
+                >
+                  {processing === user.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {isBanned ? "Unban user" : "Ban user"}
+                </Button>
+              </AlertDialogAction>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{isBanned ? "Unban User" : "Ban User"}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to {isBanned ? "unban" : "ban"} {user.name}?
+                    {!isBanned && " This will prevent them from logging in."}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => toggleBan(user.id, userStatus)}
+                    className={isBanned ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
+                    disabled={processing === user.id}
+                  >
+                    {processing === user.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isBanned ? "Unban User" : "Ban User"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        );
+      },
+    },
+  ];
+
   const stats = {
     total: items.length,
     active: items.filter(u => (u.status?.toUpperCase() || "ACTIVE") === "ACTIVE").length,
@@ -226,12 +286,11 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
           <p className="text-muted-foreground">
-            Manage user accounts, roles, and status
+            Manage user accounts, roles, status, and profile access
           </p>
         </div>
         <Button onClick={load} disabled={loading}>
@@ -240,7 +299,6 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card>
           <CardContent className="p-4">
@@ -280,189 +338,63 @@ export default function AdminUsersPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search users by name, email, or role..."
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Select value={roleFilter} onValueChange={(value: UserRole) => setRoleFilter(value)}>
-                <SelectTrigger className="w-[140px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Roles</SelectItem>
-                  <SelectItem value="STUDENT">Students</SelectItem>
-                  <SelectItem value="TUTOR">Tutors</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={(value: UserStatus) => setStatusFilter(value)}>
-                <SelectTrigger className="w-[140px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Status</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="BANNED">Banned</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {loading && items.length === 0 ? (
+        <Card>
+          <CardContent className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </CardContent>
+        </Card>
+      ) : (
+        <DynamicTable
+          title="Users"
+          description="Search, filter, page through records, and open a profile preview from the same table surface."
+          items={items}
+          rowKey={(user) => user.id}
+          columns={columns}
+          filters={filters}
+          initialPageSize={8}
+          searchPlaceholder="Search users by name, email, or role..."
+          searchMatch={(user, query) =>
+            user.name.toLowerCase().includes(query) ||
+            user.email.toLowerCase().includes(query) ||
+            (user.role ?? "").toLowerCase().includes(query)
+          }
+          emptyTitle="No users found"
+          emptyDescription="Try changing your search or filters."
+          actions={
+            <Button onClick={load} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Refresh
+            </Button>
+          }
+        />
+      )}
 
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
-          <CardDescription>
-            Showing {filteredItems.length} of {items.length} users
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="text-center py-12">
-              <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No users found</h3>
-              <p className="text-muted-foreground">
-                {search || roleFilter !== "ALL" || statusFilter !== "ALL" 
-                  ? "Try changing your filters" 
-                  : "No users in the system"}
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredItems.map((user) => {
-                    const userStatus = user.status?.toUpperCase() || "ACTIVE";
-                    const isBanned = userStatus === "BANNED";
-                    
-                    return (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              {getRoleIcon(user.role || "USER")}
-                            </div>
-                            <div>
-                              <div className="font-medium">{user.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                ID: {user.id.substring(0, 8)}...
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-1">
-                            {getRoleBadge(user.role || "USER")}
-                            {getEmailVerifiedBadge(user.emailVerified)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(user.status || "ACTIVE")}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            {user.email}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <AlertDialog>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem className={isBanned ? "text-green-600" : "text-red-600"}>
-                                    <Ban className="mr-2 h-4 w-4" />
-                                    {isBanned ? "Unban User" : "Ban User"}
-                                  </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <DropdownMenuItem>
-                                  <Shield className="mr-2 h-4 w-4" />
-                                  Change Role
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Mail className="mr-2 h-4 w-4" />
-                                  Resend Verification
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  {isBanned ? "Unban User" : "Ban User"}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to {isBanned ? "unban" : "ban"} {user.name}?
-                                  {!isBanned && " This will prevent them from logging in."}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => toggleBan(user.id, userStatus)}
-                                  className={isBanned ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
-                                  disabled={processing === user.id}
-                                >
-                                  {processing === user.id ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  ) : null}
-                                  {isBanned ? "Unban User" : "Ban User"}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>User profile</DialogTitle>
+          </DialogHeader>
+          <ProfilePanel
+            title={selectedUser?.name ?? "User profile"}
+            description="Read-only profile preview with account status and quick metadata."
+            profile={selectedUser as ProfileSummary | null}
+            mode="preview"
+            actionSlot={
+              selectedUser ? (
+                <Button
+                  variant={selectedUser.status?.toUpperCase() === "BANNED" ? "default" : "destructive"}
+                  onClick={() => toggleBan(selectedUser.id, selectedUser.status?.toUpperCase() || "ACTIVE")}
+                  disabled={processing === selectedUser.id}
+                >
+                  {processing === selectedUser.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {selectedUser.status?.toUpperCase() === "BANNED" ? "Unban user" : "Ban user"}
+                </Button>
+              ) : null
+            }
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

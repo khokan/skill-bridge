@@ -1,12 +1,19 @@
 import { NavSection } from "@/types/dashboard.types";
 import { getDefaultDashboardRoute, UserRole } from "./authUtils";
 
+type DashboardRole = UserRole | "TUTOR";
 
-export const getCommonNavItems = (role : UserRole) : NavSection[] => {
-    const defaultDashboard = getDefaultDashboardRoute(role);
+export const getCommonNavItems = (role : DashboardRole) : NavSection[] => {
+    const defaultDashboard = getDefaultDashboardRoute(role as UserRole);
+    const changePasswordHref =
+        role === "ADMIN"
+            ? "/admin/change-password"
+            : role === "TUTOR"
+            ? "/tutor/dashboard/change-password"
+            : "/dashboard/change-password";
+
     return [
         {
-            // title : "Dashboard",
             items : [
                 {
                     title : "Home",
@@ -19,11 +26,6 @@ export const getCommonNavItems = (role : UserRole) : NavSection[] => {
                     icon : "LayoutDashboard"
 
                 },
-                {
-                    title: "My Profile",
-                    href: `/my-profile`,
-                    icon: "User",
-                },
             ]
         },
         {
@@ -31,7 +33,7 @@ export const getCommonNavItems = (role : UserRole) : NavSection[] => {
             items : [
                 {
                     title : "Change Password",
-                    href : "/change-password",
+                    href : changePasswordHref,
                     icon : "Settings"
                 }
             ]
@@ -41,17 +43,45 @@ export const getCommonNavItems = (role : UserRole) : NavSection[] => {
 
 export const adminNavItems: NavSection[] = [
     {
-        title: "User Management",
+        title: "Admin",
         items: [
             {
-                title: "users",
-                href: "/admin/dashboard/users",
+                title: "Users",
+                href: "/admin/users",
                 icon: "Shield",
             },
             {
-                title: "subscriptions",
-                href: "/admin/dashboard/subscriptions",
+                title: "Bookings",
+                href: "/admin/bookings",
+                icon: "Calendar",
+            },
+            {
+                title: "Categories",
+                href: "/admin/categories",
                 icon: "Users",
+            },
+            {
+                title: "Profile",
+                href: "/admin/profile",
+                icon: "User",
+            },
+        ],
+    },
+];
+
+export const tutorNavItems: NavSection[] = [
+    {
+        title: "Tutor",
+        items: [
+            {
+                title: "Availability",
+                href: "/tutor/availability",
+                icon: "Calendar",
+            },
+            {
+                title: "Profile",
+                href: "/tutor/profile",
+                icon: "User",
             },
         ],
     },
@@ -59,28 +89,30 @@ export const adminNavItems: NavSection[] = [
 
 export const studentNavItems: NavSection[] = [
     {
-        title: "subscriptions",
+        title: "Student",
         items: [
             {
-                title: "My subscriptions",
-                href: "/dashboard/subscription",
+                title: "My Bookings",
+                href: "/dashboard/bookings",
                 icon: "Calendar",
             },
             {
-                title: "Premium Features",
-                href: "/dashboard/premium-feature",
-                icon: "ClipboardList",
+                title: "Profile",
+                href: "/dashboard/profile",
+                icon: "User",
             },
         ],
     },
   ];
 
-export const getNavItemsByRole = (role : UserRole) : NavSection[] => {
+export const getNavItemsByRole = (role : DashboardRole) : NavSection[] => {
     const commonNavItems = getCommonNavItems(role);
 
     switch (role) {
         case "ADMIN":
             return [...commonNavItems, ...adminNavItems];
+        case "TUTOR":
+            return [...commonNavItems, ...tutorNavItems];
         case "STUDENT":
             return [...commonNavItems, ...studentNavItems]
     }

@@ -22,18 +22,38 @@ export default function LoginPage() {
       const email = String(formData.get("email") ?? "");
       const password = String(formData.get("password") ?? "");
 
-     const {data, error} = await  authClient.signIn.email({email, password});
+      const { error } = await authClient.signIn.email({ email, password });
 
-     if(error) {
+      if (error) {
         toast.error(`Login failed: ${error.message}`);
         return;
-     }
+      }
+
       toast.success("Welcome back!");
       router.push(next);
       router.refresh();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Unexpected error");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-    } catch (e: any) {
-      toast.error(e.message);
+  async function handleDemoLogin(email: string, password: string) {
+    setLoading(true);
+    try {
+      const { error } = await authClient.signIn.email({ email, password });
+
+      if (error) {
+        toast.error(`Demo login failed: ${error.message}`);
+        return;
+      }
+
+      toast.success("Logged in successfully");
+      router.push(next);
+      router.refresh();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Unexpected error");
     } finally {
       setLoading(false);
     }
@@ -55,7 +75,7 @@ export default function LoginPage() {
           <div className="space-y-4">
             <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               Welcome back to
-              <span className="block bg-gradient-to-r from-primary via-cyan-500 to-primary bg-clip-text text-transparent">
+              <span className="block bg-linear-to-r from-primary via-cyan-500 to-primary bg-clip-text text-transparent">
                 Skill Bridge
               </span>
             </h1>
@@ -82,7 +102,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative mx-auto w-full max-w-md">
-          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-primary/30 via-cyan-400/20 to-primary/30 blur-xl" />
+          <div className="absolute -inset-1 rounded-3xl bg-linear-to-r from-primary/30 via-cyan-400/20 to-primary/30 blur-xl" />
           <Card className="relative overflow-hidden rounded-3xl border border-border/60 bg-background/80 shadow-2xl backdrop-blur-xl">
             <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary via-cyan-400 to-primary" />
             <CardContent className="p-8 sm:p-10">
@@ -98,6 +118,41 @@ export default function LoginPage() {
                   {loading ? "Signing in..." : "Sign in"}
                 </Button>
               </form>
+
+              <div className="mt-6 rounded-3xl border border-border/70 bg-muted/70 p-4 text-sm text-muted-foreground">
+                <div className="mb-3 text-xs uppercase tracking-[0.2em] text-primary">Demo accounts</div>
+                <div className="grid gap-3">
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 rounded-xl"
+                      disabled={loading}
+                      onClick={() => void handleDemoLogin("kk@gmail.com", "kk123456")}
+                    >
+                      Admin
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 rounded-xl"
+                      disabled={loading}
+                      onClick={() => void handleDemoLogin("tutor1@gmail.com", "kk123456")}
+                    >
+                      Tutor
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 rounded-xl"
+                      disabled={loading}
+                      onClick={() => void handleDemoLogin("student1@gmail.com", "kk123456")}
+                    >
+                      Student
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

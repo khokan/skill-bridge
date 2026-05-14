@@ -63,7 +63,7 @@ const UserDropdown = ({ userInfo }: UserDropdownProps) => {
 
             <DropdownMenuSeparator/>
 
-            <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild>
                 <Link href={"/my-profile"} className="flex w-full items-center">
                 <User className="mr-2 h-4 w-4"/>
                     My Profile
@@ -71,7 +71,16 @@ const UserDropdown = ({ userInfo }: UserDropdownProps) => {
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
-                <Link href={"/change-password"} className="flex w-full items-center">
+                <Link
+                  href={
+                    userInfo.role === "ADMIN"
+                      ? "/admin/change-password"
+                      : userInfo.role === "TUTOR"
+                      ? "/tutor/dashboard/change-password"
+                      : "/dashboard/change-password"
+                  }
+                  className="flex w-full items-center"
+                >
                     <Key className="mr-2 h-4 w-4"/>
                     Change Password
                 </Link>

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { getProfile, updateProfile } from "@/actions/student.action";
 import { ProfilePanel, type ProfileSummary } from "@/components/shared/profile-panel";
 
-export default function StudentProfilePage() {
+export default function AdminProfilePage() {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
 
@@ -46,8 +46,8 @@ export default function StudentProfilePage() {
   return (
     <div className="mx-auto max-w-4xl p-4 md:p-6">
       <ProfilePanel
-        title="My Profile"
-        description="Update your account information without leaving the dashboard theme."
+        title="Admin Profile"
+        description="Update the admin account profile using the same shared profile system."
         profile={profile}
         mode="edit"
         loading={loading}

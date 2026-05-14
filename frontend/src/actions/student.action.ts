@@ -18,3 +18,10 @@ export const createReview = async (payload: { bookingId: string; rating: number;
   revalidatePath("/dashboard/bookings");
   return result;
 };
+
+export const changePassword = async (payload: { currentPassword: string; newPassword: string }) => {
+  const result = await studentService.changePassword(payload);
+  revalidatePath("/change-password");
+  return result;
+};
+

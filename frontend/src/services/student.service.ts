@@ -71,4 +71,46 @@ export const studentService = {
       return { data: null, error: { message: "Something Went Wrong" } };
     }
   },
+
+  changePassword: async function (payload: {
+    currentPassword: string;
+    newPassword: string;
+  }) {
+    try {
+      const cookieStore = await cookies();
+
+      const cookieHeader = cookieStore
+        .getAll()
+        .map((c) => `${c.name}=${c.value}`)
+        .join("; ");
+
+      // 👇 IMPORTANT: set correct frontend origin
+      const origin =
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+      const res = await fetch(`${API_URL}/auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieHeader,
+          origin,
+          referer: origin,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return {
+          data: null,
+          error: { message: data?.message ?? "Failed to change password" },
+        };
+      }
+
+      return { data, error: null };
+    } catch (err: unknown) {
+      return { data: null, error: { message: "Something Went Wrong" } };
+    }
+  },
 };

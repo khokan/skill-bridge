@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "SkillBridge — Connect with Expert Tutors",
   description: "Browse tutors, book sessions instantly, and learn anything.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/favicon.ico",
     apple: "/favicon.svg",
   },
 };
@@ -24,9 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider>
-          <Navbar />
           <main className="min-h-[calc(100vh-170px)]">{children}</main>
-          <Footer />
           <Toaster richColors position="top-right" />
           <FloatingChatWidget />
         </ThemeProvider>

@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "STUDENT";
+export type UserRole = "ADMIN" | "STUDENT" | "TUTOR";
 
 export const authRoutes = [ "/login", "/register" ];
 
@@ -22,14 +22,19 @@ export const doctorProtectedRoutes : RouteConfig = {
 }
 
 export const adminProtectedRoutes : RouteConfig = {
-    pattern: [/^\/admin\/dashboard/ ], // Matches any path that starts with /admin/dashboard
+    pattern: [/^\/admin(\/|$)/ ], // Matches /admin and any nested admin routes
     exact : []
 }
 
 export const superAdminProtectedRoutes : RouteConfig = {
-    pattern: [/^\/admin\/dashboard/ ], // Matches any path that starts with /super-admin/dashboard
+    pattern: [/^\/admin(\/|$)/ ], // Matches /admin and any nested admin routes
     exact : []
 }
+
+export const tutorProtectedRoutes : RouteConfig = {
+    pattern: [/^\/tutor\/dashboard/ ], // Matches any path that starts with /tutor/dashboard
+    exact : []
+};
 
 export const studentProtectedRoutes : RouteConfig = {
     pattern: [/^\/dashboard/ ], // Matches any path that starts with /dashboard
@@ -43,7 +48,7 @@ export const isRouteMatches = (pathname : string, routes : RouteConfig) => {
     return routes.pattern.some((pattern : RegExp) => pattern.test(pathname));
 }
 
-export const getRouteOwner = (pathname : string) : "SUPER_ADMIN" | "ADMIN" | "STUDENT" | "COMMON" | null => {
+export const getRouteOwner = (pathname : string) : "SUPER_ADMIN" | "ADMIN" | "TUTOR" | "STUDENT" | "COMMON" | null => {
     if (isRouteMatches(pathname, superAdminProtectedRoutes)) {
         return "SUPER_ADMIN";
     }
@@ -52,6 +57,10 @@ export const getRouteOwner = (pathname : string) : "SUPER_ADMIN" | "ADMIN" | "ST
         return "ADMIN";
     }
     
+    if(isRouteMatches(pathname, tutorProtectedRoutes)) {
+        return "TUTOR";
+    }
+
     if(isRouteMatches(pathname, studentProtectedRoutes)) {
         return "STUDENT";
     }
@@ -65,7 +74,10 @@ export const getRouteOwner = (pathname : string) : "SUPER_ADMIN" | "ADMIN" | "ST
 
 export const getDefaultDashboardRoute = (role : UserRole) => {
     if(role === "ADMIN") {
-        return "/admin/dashboard";
+        return "/admin";
+    }
+    if(role === "TUTOR") {
+        return "/tutor/dashboard";
     }
     if(role === "STUDENT") {
         return "/dashboard";
