@@ -2,7 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-    async rewrites() {
+ images: {
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "i.ibb.co.com",
+      pathname: "/**",
+    },
+  ],
+},
+  async rewrites() {
     return [
       {
         source: "/api/auth/:path*",

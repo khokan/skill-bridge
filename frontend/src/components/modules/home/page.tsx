@@ -160,6 +160,56 @@ export default async function HomePage() {
         </section>
       )}
 
+ {/* ================= SECTION 5: POPULAR CATEGORIES ================= */}
+      <section className="space-y-10 py-8 px-6 sm:px-8 lg:px-10">
+        <div className="text-center space-y-4">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Explore Popular Subjects
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Learn from experts across hundreds of subjects and skill areas
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {subjects.slice(0, 4).map((subject) => (
+            <Card key={subject.name} className="rounded-xl border hover:border-primary/50 hover:shadow-md transition-all group hover:-translate-y-1">
+              <CardContent className="p-6 text-center space-y-4">
+                <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">{subject.icon}</div>
+                <div>
+                  <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                    {subject.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {subject.tutors} expert tutors
+                  </p>
+                </div>
+                <Button asChild variant="outline" size="sm" className="w-full">
+                  <Link href={`/tutors?subject=${subject.name.toLowerCase()}`}>
+                    Browse Tutors
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 md:grid-cols-8">
+          {subjects.map((subject) => (
+            <Badge
+              key={subject.name}
+              variant="outline"
+              className="px-3 py-2 text-sm font-normal hover:bg-primary/10 hover:text-primary cursor-pointer transition-all hover:-translate-y-1"
+              asChild
+            >
+              <Link href={`/tutors?subject=${subject.name.toLowerCase()}`}>
+                {subject.name}
+              </Link>
+            </Badge>
+          ))}
+        </div>
+      </section>
+      
       {/* ================= SECTION 3: AI CHATBOT FEATURE ================= */}
       <section className="grid gap-8 items-center lg:grid-cols-2 py-8 px-6 sm:px-8 lg:px-10">
         <div className="space-y-6">
@@ -271,56 +321,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
-
-      {/* ================= SECTION 5: POPULAR CATEGORIES ================= */}
-      <section className="space-y-10 py-8 px-6 sm:px-8 lg:px-10">
-        <div className="text-center space-y-4">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Explore Popular Subjects
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Learn from experts across hundreds of subjects and skill areas
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {subjects.slice(0, 4).map((subject) => (
-            <Card key={subject.name} className="rounded-xl border hover:border-primary/50 hover:shadow-md transition-all group hover:-translate-y-1">
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">{subject.icon}</div>
-                <div>
-                  <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                    {subject.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {subject.tutors} expert tutors
-                  </p>
-                </div>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href={`/tutors?subject=${subject.name.toLowerCase()}`}>
-                    Browse Tutors
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 md:grid-cols-8">
-          {subjects.map((subject) => (
-            <Badge
-              key={subject.name}
-              variant="outline"
-              className="px-3 py-2 text-sm font-normal hover:bg-primary/10 hover:text-primary cursor-pointer transition-all hover:-translate-y-1"
-              asChild
-            >
-              <Link href={`/tutors?subject=${subject.name.toLowerCase()}`}>
-                {subject.name}
-              </Link>
-            </Badge>
-          ))}
-        </div>
-      </section>
+     
 
       {/* ================= SECTION 6: WHY CHOOSE SKILLBRIDGE ================= */}
       <section className="bg-muted/30 rounded-3xl p-8 md:p-12 space-y-10 py-8 mx-auto w-full">

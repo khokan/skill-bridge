@@ -8,8 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Clock, Filter, Search, BookOpen, CheckCircle, X } from "lucide-react";
+import Navbar from "@/components/shared/navbar";
+import { Footer } from "@/components/shared/footer";
 
 export const dynamic = "force-dynamic";
+
+const PLACEHOLDER_IMAGES = [
+  "https://i.ibb.co.com/FL3ZV472/Reading.jpg",
+  "https://i.ibb.co.com/FL3ZV472/Reading.jpg",
+  "https://i.ibb.co.com/FL3ZV472/Reading.jpg",
+  "https://i.ibb.co.com/FL3ZV472/Reading.jpg",
+];
 
 const pick = (v: unknown) =>
   Array.isArray(v) ? String(v[0] ?? "") : v != null ? String(v) : "";
@@ -85,12 +94,14 @@ export default async function TutorsPage({
     : filteredTutors;
 
   // Popular categories for quick filters
-  const popularCategories = ["mathematics", "physics", "english", "chemistry", "programming", "languages", "business", "art"];
+  const popularCategories = ["english","math", "physics", "chemistry", "programming", "languages", "business", "art"];
 
   // Check if any filters are active
   const hasActiveFilters = q || (category && category !== "all") || ratingFilter !== "0" || experienceFilter !== "0";
 
   return (
+    <>
+    <Navbar/>
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/5">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
@@ -330,8 +341,8 @@ export default async function TutorsPage({
           <Card className="border-destructive/50 bg-destructive/10">
             <CardContent className="p-6 text-center">
               <p className="text-destructive font-medium">{error.message}</p>
-              <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-                Try Again
+              <Button asChild variant="outline" className="mt-4">
+                <Link href="/tutors">Try Again</Link>
               </Button>
             </CardContent>
           </Card>
@@ -339,15 +350,33 @@ export default async function TutorsPage({
           <>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {finalTutors.map((tutor: any) => {
+              {finalTutors.map((tutor: any, index: number) => {
                 const tutorRating = tutor.avgRating || 4.5;
                 const fullStars = Math.floor(tutorRating);
+                const imageUrl = tutor.user?.image || PLACEHOLDER_IMAGES[index % PLACEHOLDER_IMAGES.length];
                 
                 return (
                   <Card 
                     key={tutor.id}
                     className="group relative overflow-hidden rounded-2xl border transition-all hover:shadow-lg hover:border-primary/50"
                   >
+                    <div className="relative h-44 overflow-hidden bg-slate-100">
+                      <img
+                        src={imageUrl}
+                        alt={tutor.user?.name || "Tutor photo"}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 to-transparent p-4 text-white">
+                        <div className="flex items-center justify-between text-sm font-semibold">
+                          <span>{(tutor.avgRating || 4.8).toFixed(1)}★</span>
+                          <span>{tutor.reviewCount ?? 0} reviews</span>
+                        </div>
+                        <div className="mt-2 text-xs text-slate-200">
+                          {tutor.categories?.[0]?.name ?? "General"}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Verified Badge */}
                     {tutor.isVerified && (
                       <div className="absolute right-3 top-3 z-10">
@@ -359,6 +388,13 @@ export default async function TutorsPage({
                     )}
 
                     <CardContent className="p-6">
+                      <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span>{tutor.experienceYrs || 3}+ yrs exp</span>
+                        <span className="h-1 w-1 shrink-0 rounded-full bg-border" />
+                        <span>{tutor.categories?.[0]?.name ?? "General"}</span>
+                        <span className="h-1 w-1 shrink-0 rounded-full bg-border" />
+                        <span>{tutor.hourlyRate?.toLocaleString() || "2,000"} {tutor.currency || "BDT"}</span>
+                      </div>
                       {/* Tutor Info */}
                       <div className="mb-4 flex items-start gap-4">
                         <Avatar className="h-16 w-16 border-2 border-primary/10">
@@ -462,6 +498,45 @@ export default async function TutorsPage({
               })}
             </div>
 
+            {finalTutors.length > 0 && (
+              <section className="mt-10 space-y-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.3em] text-primary">Learner favorites</p>
+                    <h2 className="text-2xl font-semibold">Top-reviewed tutors</h2>
+                  </div>
+                  <p className="text-sm text-muted-foreground max-w-xl">
+                    These tutors have the strongest student feedback and the best session reviews.
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  {finalTutors.slice(0, 3).map((tutor: any) => (
+                    <Card key={`review-card-${tutor.id}`} className="rounded-3xl border p-4 shadow-sm">
+                      <div className="mb-4 flex items-center gap-3">
+                        <Avatar className="h-12 w-12 border border-primary/10">
+                          <AvatarImage src={tutor.user?.image || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-base">
+                            {getInitials(tutor.user?.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1">
+                          <h3 className="font-semibold">{tutor.user?.name ?? "Tutor"}</h3>
+                          <p className="text-sm text-muted-foreground">{tutor.headline ?? "Expert Tutor"}</p>
+                        </div>
+                      </div>
+                      <p className="mb-4 text-sm text-muted-foreground line-clamp-3">
+                        {tutor.bio || "Trusted tutor with excellent student reviews and proven outcomes."}
+                      </p>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-semibold">{(tutor.avgRating || 4.8).toFixed(1)}★</span>
+                        <span className="text-muted-foreground">{tutor.reviewCount ?? 0} reviews</span>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Empty State */}
             {finalTutors.length === 0 && !error && (
               <Card className="border-dashed">
@@ -532,5 +607,8 @@ export default async function TutorsPage({
         )}
       </div>
     </div>
+    <Footer />
+    </>
+    
   );
 }

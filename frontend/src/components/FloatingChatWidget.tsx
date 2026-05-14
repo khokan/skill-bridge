@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, Bot, X, Send } from "lucide-react";
+import { MessageCircle, Bot, X, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type ChatMessage = {
@@ -30,6 +30,7 @@ const FloatingChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(buildInitialMessages);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const scrollBottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -54,6 +55,7 @@ const FloatingChatWidget = () => {
 
     appendMessage({ id: genId("user"), role: "user", text: q });
     setInput("");
+    setIsLoading(true);
 
     try {
       const api = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -155,6 +157,8 @@ const FloatingChatWidget = () => {
     } catch (err) {
       const msg = String(err ?? "Error");
       appendMessage({ id: genId("assistant-error"), role: "assistant", text: msg });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -181,7 +185,7 @@ const FloatingChatWidget = () => {
         <Button
           type="button"
           size="icon-lg"
-          className="fixed right-4 bottom-4 z-50 h-14 w-14 rounded-full shadow-xl"
+          className="fixed right-4 bottom-4 z-50 h-14 w-14 rounded-full bg-linear-to-br from-primary to-cyan-500 text-primary-foreground shadow-2xl shadow-cyan-500/30 ring-1 ring-primary/20"
           onClick={() => setIsOpen(true)}
           aria-label="Open AI assistant"
         >
@@ -234,23 +238,63 @@ const FloatingChatWidget = () => {
               ))}
               <div ref={scrollBottomRef} />
             </div>
+            {isLoading ? (
+              <div className="mt-3 rounded-3xl bg-primary/10 p-3 text-center text-sm text-primary">
+                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                </div>
+                <p className="font-medium">Searching tutor matches...</p>
+                <p className="text-xs text-muted-foreground">Fetching the best answers and related profiles...</p>
+              </div>
+            ) : null}
           </div>
 
           <div className="border-t border-border/60 bg-card/95 p-3">
             <div className="mb-2 flex flex-wrap gap-2">
               {starterPrompts.map((p) => (
-                <Button key={p} type="button" size="xs" variant="outline" className="h-7" onClick={() => void sendQuery(p)}>
+                <Button key={p} type="button" size="xs" variant="outline" className="h-7" onClick={() => void sendQuery(p)} disabled={isLoading}>
                   {p}
                 </Button>
               ))}
             </div>
 
-            <div className="flex items-end gap-2">
-              <Textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask about tutors..." className="min-h-10 resize-none border-border/70 bg-background/80 text-foreground placeholder:text-muted-foreground" onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendQuery(input); } }} />
-
-              <Button type="button" size="icon" onClick={() => void sendQuery(input)} aria-label="Send message">
-                <Send className="h-4 w-4" />
-              </Button>
+            <div className="flex flex-col gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={isLoading ? "Finding matching tutors..." : "Ask about tutors..."}
+                className="min-h-10 resize-none border-border/70 bg-background/80 text-foreground placeholder:text-muted-foreground"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void sendQuery(input);
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  className="h-12 flex-1 rounded-xl bg-linear-to-r from-primary to-cyan-500 text-primary-foreground shadow-lg shadow-cyan-500/20 transition-transform duration-200 hover:-translate-y-0.5"
+                  onClick={() => void sendQuery(input)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Finding matches...
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      <Send className="h-4 w-4" />
+                      Search tutors
+                    </span>
+                  )}
+                </Button>
+                <div className="rounded-2xl bg-muted/80 px-3 py-2 text-xs text-muted-foreground">
+                  {isLoading ? "Scanning tutor profiles..." : "Ready to find smart matches."}
+                </div>
+              </div>
             </div>
           </div>
         </section>
